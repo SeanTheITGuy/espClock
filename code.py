@@ -32,6 +32,7 @@ def wifiConnect():
 
   return(socketpool.SocketPool(wifi.radio))
   
+# Syncronize internal time via ntp and return current epoch seconds
 def syncTime():
   try:
     # Get current time from NTP
@@ -44,6 +45,7 @@ def syncTime():
 
   return(time.time())
 
+# Initialize two PCA boards and return a list of all 32 available output channels
 def getServoList():
   # Use board defined I2C pins
   i2c = busio.I2C(SCL, SDA)
@@ -66,17 +68,18 @@ def getServoList():
 
   return(servo_list)
   
+# return a 4 digit number with the current time (eg: 11:42am -> 1142)
 def getFourDigitTime(t):
   return(t.tm_hour * 100 + t.tm_min)
 
+# Return the single digit at the nth position of a number
 def getDigit(number, n):
-  # Return the number at the nth position of number
   x = number // 10**n % 10
   print("number at ", n, " position is ", x)
   return(x)
 
+# Set a clock digit segment on or off
 def setSegment(s, index, is_set):
-
   # Determine if this segment needs to have its 0:180 OFF:ON mapping inverted
   if INVERSION_MAP[index%7]:
       print("Servo ", index, " needs inversion")
@@ -92,8 +95,8 @@ def setSegment(s, index, is_set):
 
   return
 
+# Take a single digit and display it on the clock at a specified position 
 def displayDigit(digit, index, servos):
-
   # Define where to start in the servo list based on which digit place we are displaying
   servo_index_offset = index * 7
   print("servo offset for number at index ", index, " is ", servo_index_offset)
@@ -115,7 +118,7 @@ def displayDigit(digit, index, servos):
 
   return
 
-
+# Display the passed 4 digit number on the clock
 def displayTime(t, servos):
   for i in range(4):
     digit = getDigit(t, i)
@@ -125,7 +128,6 @@ def displayTime(t, servos):
   return
 
 if __name__ == "__main__":
-
   # Get a list of the servo channels
   servos = getServoList()
 
@@ -151,8 +153,11 @@ if __name__ == "__main__":
     
     # Check if the time has changed 
     if(last_time != new_time):
+      # Time has changed, update the clock
       print("Updating time to: ", new_time)
       displayTime(new_time, servos)
+      # New time now becomes old time
       last_time = new_time
 
+    # Sleep for a second. 
     time.sleep(1)
