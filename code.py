@@ -15,8 +15,8 @@ MIN_PWM = 1000
 MAX_PWM = 2000
 PWM_FREQ = 50
 INVERSION_MAP = [ True, True, False, True, False, True, True ]
-# [ "01110111", "00010010", "01011101", "01011011", "00111010", "01101011", "01101111", "01010010", "01111111", "01111011" ]
-SEGMENT_MAP = [119, 18, 93, 91, 58, 107, 111, 82, 127, 123]
+SEGMENT_MAP = [ 0b1110111, 0b0010010, 0b1011101, 0b1011011, 0b0111010, 0b1101011, 0b1101111, 0b1010010, 0b1111111, 0b1111011 ]
+#SEGMENT_MAP = [119, 18, 93, 91, 58, 107, 111, 82, 127, 123]
 TZ_OFFSET = -4
 RESYNC_HOURS = 4
 
@@ -103,6 +103,12 @@ def displayDigit(digit, position, servos):
 
   # Get an int representing the bits of the desired number's segment map
   segments = SEGMENT_MAP[digit]
+
+  # Logic for single digit hours to not display the leading zero
+  if position == 3 and digit == 0:
+    print("Leading zero. Setting all segments off")
+    segments = 0b0000000
+
   print("segment map for ", digit, " is ", "{0:b}".format(segments))
 
   # we only care about the lower 7 bits for our 7 segment display
