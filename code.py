@@ -1,0 +1,158 @@
+import os
+import ipaddress
+import wifi
+import socketpool
+import time
+import busio
+import rtc
+import adafruit_ntp
+from board import SCL, SDA
+from adafruit_motor import servo
+from adafruit_pca9685 import PCA9685
+
+# Constants
+MIN_PWM = 1000
+MAX_PWM = 2000
+PWM_FREQ = 50
+INVERSION_MAP = [ True, True, False, True, False, True, True ]
+# [ "01110111", "00010010", "01011101", "01011011", "00111010", "01101011", "01101111", "01010010", "01111111", "01111011" ]
+DIGIT_MAP = [119, 18, 93, 91, 58, 107, 111, 82, 127, 123]
+TZ_OFFSET = -4
+RESYNC_HOURS = 4
+
+def wifiConnect():
+  try: 
+    ssid = os.getenv("WIFI_SSID")
+    password = os.getenv("WIFI_PASSWORD")
+    print("Connecting to", ssid)
+    wifi.radio.connect(ssid, password)
+    print("Connected to", ssid, " IP: ", wifi.radio.ipv4_address)
+  except:
+    print("Failed to connect to wifi.")
+
+  return(socketpool.SocketPool(wifi.radio))
+  
+def syncTime():
+  try:
+    # Get current time from NTP
+    pool = wifiConnect();
+    ntp = adafruit_ntp.NTP(pool, tz_offset=TZ_OFFSET)
+    rtc.RTC().datetime = ntp.datetime
+    print("Time syncronized.")
+  except: 
+    print("Failed to sync time.")
+
+  return(time.time())
+
+def getServoList():
+  # Use board defined I2C pins
+  i2c = busio.I2C(SCL, SDA)
+
+  # Servo controller devices
+  print("Initializing PCA boards")
+  kits = [ PCA9685(i2c, address=0x40), PCA9685(i2c, address=0x41) ]
+
+  # Set up kits and define servo array
+  print("Collating Servos...")
+  servo_list = []
+
+  for kit in kits:
+    kit.frequency = PWM_FREQ
+    print("\n", kit, " ", end='')
+    for i in range(16):
+      print(i, " ", end='')
+      servo_list.append(servo.Servo(kit.channels[i], min_pulse=MIN_PWM, max_pulse=MAX_PWM))
+  print("\nServos Collated")
+
+  return(servo_list)
+  
+def getFourDigitTime(t):
+  return(t.tm_hour * 100 + t.tm_min)
+
+def getDigit(number, n):
+  # Return the number at the nth position of number
+  x = number // 10**n % 10
+  print("number at ", n, " position is ", x)
+  return(x)
+
+def setSegment(s, index, is_set):
+
+  # Determine if this segment needs to have its 0:180 OFF:ON mapping inverted
+  if INVERSION_MAP[index%7]:
+      print("Servo ", index, " needs inversion")
+      is_set = not is_set
+
+  # Move servo to appropriate angle
+  if is_set:
+    print("Setting servo ", index, " to 180 degrees")
+    s.angle = 180
+  else:
+    print("Setting servo ", index, " to 0 degrees")
+    s.angle = 0
+
+  return
+
+def displayDigit(digit, index, servos):
+
+  # Define where to start in the servo list based on which digit place we are displaying
+  servo_index_offset = index * 7
+  print("servo offset for number at index ", index, " is ", servo_index_offset)
+
+  # Get an int encoded by the binary of the desired number's segment map byte
+  segments = DIGIT_MAP[digit]
+  print("segment map for ", digit, " is ", "{0:b}".format(segments))
+
+  # we only care about the lower 7 bits for our 7 segment display
+  for i in range(7):
+    servo_index = servo_index_offset + i
+    print("Checking bit ", i)
+    if segments & (1<<(i)):
+      setSegment(servos[servo_index], servo_index, True)
+      print("bit ", i, " is ON. Setting servo ", servo_index_offset+i, " ON")
+    else:
+      setSegment(servos[servo_index], servo_index, False)
+      print("bit ", i, " is OFF. Setting servo ", servo_index_offset+i, " OFF")
+
+  return
+
+
+def displayTime(t, servos):
+  for i in range(4):
+    digit = getDigit(t, i)
+    print("Displaying digit ", digit, " at position ", i)
+    displayDigit(digit, i, servos)
+
+  return
+
+if __name__ == "__main__":
+
+  # Get a list of the servo channels
+  servos = getServoList()
+
+  # Sync time via wifi and record the sync time
+  sync_time = syncTime()
+
+  # Get the current time in 4 digit format
+  last_time = getFourDigitTime(time.localtime())
+  print("Start time: ", last_time)
+
+  # Display the initial time
+  displayTime(last_time, servos)
+
+  # Start the clock update loop
+  while True:
+    
+    # check if time needs to be resynced
+    if(time.time() - sync_time > RESYNC_HOURS * 3600):
+      sync_time = syncTime()
+
+    # Get the current time
+    new_time = getFourDigitTime(time.localtime())
+    
+    # Check if the time has changed 
+    if(last_time != new_time):
+      print("Updating time to: ", new_time)
+      displayTime(new_time, servos)
+      last_time = new_time
+
+    time.sleep(1)
