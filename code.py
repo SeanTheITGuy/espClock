@@ -16,7 +16,7 @@ MAX_PWM = 2000
 PWM_FREQ = 50
 INVERSION_MAP = [ True, True, False, True, False, True, True ]
 # [ "01110111", "00010010", "01011101", "01011011", "00111010", "01101011", "01101111", "01010010", "01111111", "01111011" ]
-DIGIT_MAP = [119, 18, 93, 91, 58, 107, 111, 82, 127, 123]
+SEGMENT_MAP = [119, 18, 93, 91, 58, 107, 111, 82, 127, 123]
 TZ_OFFSET = -4
 RESYNC_HOURS = 4
 
@@ -96,24 +96,24 @@ def setSegment(s, index, is_set):
   return
 
 # Take a single digit and display it on the clock at a specified position 
-def displayDigit(digit, index, servos):
+def displayDigit(digit, position, servos):
   # Define where to start in the servo list based on which digit place we are displaying
-  servo_index_offset = index * 7
-  print("servo offset for number at index ", index, " is ", servo_index_offset)
+  servo_index_offset = position * 7
+  print("servo offset for number at position ", position, " is ", servo_index_offset)
 
-  # Get an int encoded by the binary of the desired number's segment map byte
-  segments = DIGIT_MAP[digit]
+  # Get an int representing the bits of the desired number's segment map
+  segments = SEGMENT_MAP[digit]
   print("segment map for ", digit, " is ", "{0:b}".format(segments))
 
   # we only care about the lower 7 bits for our 7 segment display
   for i in range(7):
-    servo_index = servo_index_offset + i
+    servo_position = servo_index_offset + i
     print("Checking bit ", i)
     if segments & (1<<(i)):
-      setSegment(servos[servo_index], servo_index, True)
+      setSegment(servos[servo_position], servo_position, True)
       print("bit ", i, " is ON. Setting servo ", servo_index_offset+i, " ON")
     else:
-      setSegment(servos[servo_index], servo_index, False)
+      setSegment(servos[servo_position], servo_position, False)
       print("bit ", i, " is OFF. Setting servo ", servo_index_offset+i, " OFF")
 
   return
