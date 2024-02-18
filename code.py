@@ -11,14 +11,18 @@ from adafruit_motor import servo
 from adafruit_pca9685 import PCA9685
 
 # Constants
+DEBUG = True
+MILITARY_TIME = False
 MIN_PWM = 1000
 MAX_PWM = 2000
 PWM_FREQ = 50
 INVERSION_MAP = [ True, True, False, True, False, True, True ]
-SEGMENT_MAP = [ 0b1110111, 0b0010010, 0b1011101, 0b1011011, 0b0111010, 0b1101011, 0b1101111, 0b1010010, 0b1111111, 0b1111011 ]
-#SEGMENT_MAP = [119, 18, 93, 91, 58, 107, 111, 82, 127, 123]
+#SEGMENT_MAP = [ 0b1110111, 0b0010010, 0b1011101, 0b1011011, 0b0111010, 0b1101011, 0b1101111, 0b1010010, 0b1111111, 0b1111011 ]
+SEGMENT_MAP = [ 0b1110111, 0b0100100, 0b1011101, 0b1101101, 0b0101110, 0b1101011, 0b1111011, 0b0100101, 0b1111111, 0b1101111 ]
 TZ_OFFSET = -4
 RESYNC_HOURS = 4
+SERVO_ON = 180 
+SERVO_OFF = 0
 
 def wifiConnect():
   try: 
@@ -63,14 +67,21 @@ def getServoList():
     print("\n", kit, " ", end='')
     for i in range(16):
       print(i, " ", end='')
-      servo_list.append(servo.Servo(kit.channels[i], min_pulse=MIN_PWM, max_pulse=MAX_PWM))
+      servo_list.append(servo.Servo(kit.channels[i], min_pulse=MIN_PWM, max_pulse=MAX_PWM, actuation_range=180))
   print("\nServos Collated")
 
   return(servo_list)
   
 # return a 4 digit number with the current time (eg: 11:42am -> 1142)
 def getFourDigitTime(t):
-  return(t.tm_hour * 100 + t.tm_min)
+  hour = t.tm_hour
+  minute = t.tm_min
+  
+  # Logic for 12hr time
+  if not MILITARY_TIME:
+    hour = hour%12
+
+  return(hour * 100 + minute)
 
 # Return the single digit at the nth position of a number
 def getDigit(number, n):
@@ -80,18 +91,18 @@ def getDigit(number, n):
 
 # Set a clock digit segment on or off
 def setSegment(s, index, is_set):
-  # Determine if this segment needs to have its 0:180 OFF:ON mapping inverted
+  # Determine if this segment needs to have its OFF:ON mapping inverted
   if INVERSION_MAP[index%7]:
       print("Servo ", index, " needs inversion")
       is_set = not is_set
 
   # Move servo to appropriate angle
   if is_set:
-    print("Setting servo ", index, " to 180 degrees")
-    s.angle = 180
+    print("Setting servo ", index, " to ", SERVO_ON, " degrees")
+    s.angle = SERVO_ON
   else:
-    print("Setting servo ", index, " to 0 degrees")
-    s.angle = 0
+    print("Setting servo ", index, " to ", SERVO_OFF, " degrees")
+    s.angle = SERVO_OFF
 
   return
 
@@ -115,7 +126,8 @@ def displayDigit(digit, position, servos):
   for i in range(7):
     servo_position = servo_index_offset + i
     print("Checking bit ", i)
-    if segments & (1<<(i)):
+    #if segments & (1<<(i)):
+    if (segments >> i) & 1:
       setSegment(servos[servo_position], servo_position, True)
       print("bit ", i, " is ON. Setting servo ", servo_index_offset+i, " ON")
     else:
@@ -137,6 +149,13 @@ if __name__ == "__main__":
   # Get a list of the servo channels
   servos = getServoList()
 
+  # Debugging counter, count 0-9 on position 0
+  if DEBUG:
+    while True:
+      for i in range(10):
+        displayDigit(i, 0, servos)
+        time.sleep(2)
+
   # Sync time via wifi and record the sync time
   sync_time = syncTime()
 
@@ -149,7 +168,7 @@ if __name__ == "__main__":
 
   # Start the clock update loop
   while True:
-    
+
     # check if time needs to be resynced
     if(time.time() - sync_time > RESYNC_HOURS * 3600):
       sync_time = syncTime()
@@ -165,5 +184,5 @@ if __name__ == "__main__":
       # New time now becomes old time
       last_time = new_time
 
-    # Sleep for a second. 
-    time.sleep(1)
+    # Sleep 
+    time.sleep(0.25)
