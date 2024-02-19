@@ -1,5 +1,5 @@
 import os
-import ipaddress
+#import ipaddress
 import wifi
 import socketpool
 import time
@@ -17,7 +17,6 @@ MIN_PWM = 1000
 MAX_PWM = 2000
 PWM_FREQ = 50
 INVERSION_MAP = [ True, True, False, True, False, True, True ]
-#SEGMENT_MAP = [ 0b1110111, 0b0010010, 0b1011101, 0b1011011, 0b0111010, 0b1101011, 0b1101111, 0b1010010, 0b1111111, 0b1111011 ]
 SEGMENT_MAP = [ 0b1110111, 0b0100100, 0b1011101, 0b1101101, 0b0101110, 0b1101011, 0b1111011, 0b0100101, 0b1111111, 0b1101111 ]
 TZ_OFFSET = -4
 RESYNC_HOURS = 4
@@ -53,6 +52,7 @@ def syncTime():
 def getServoList():
   # Use board defined I2C pins
   i2c = busio.I2C(SCL, SDA)
+  
 
   # Servo controller devices
   print("Initializing PCA boards")
