@@ -11,7 +11,7 @@ from adafruit_motor import servo
 from adafruit_pca9685 import PCA9685
 
 # Constants
-DEBUG = True
+DEBUG = False
 MILITARY_TIME = False
 MIN_PWM = 1000
 MAX_PWM = 2000
@@ -92,7 +92,7 @@ def getDigit(number, n):
 # Set a clock digit segment on or off
 def setSegment(s, index, is_set):
   # Determine if this segment needs to have its OFF:ON mapping inverted
-  if INVERSION_MAP[index%7]:
+  if INVERSION_MAP[index%8]:
       print("Servo ", index, " needs inversion")
       is_set = not is_set
 
@@ -109,7 +109,7 @@ def setSegment(s, index, is_set):
 # Take a single digit and display it on the clock at a specified position 
 def displayDigit(digit, position, servos):
   # Define where to start in the servo list based on which digit place we are displaying
-  servo_index_offset = position * 7
+  servo_index_offset = position * 8
   print("servo offset for number at position ", position, " is ", servo_index_offset)
 
   # Get an int representing the bits of the desired number's segment map
@@ -140,8 +140,8 @@ def displayDigit(digit, position, servos):
 def displayTime(t, servos):
   for i in range(4):
     digit = getDigit(t, i)
-    print("Displaying digit ", digit, " at position ", i)
-    displayDigit(digit, i, servos)
+    print("Displaying digit ", digit, " at position ", 3-i)
+    displayDigit(digit, 3-i, servos)
 
   return
 
@@ -152,8 +152,9 @@ if __name__ == "__main__":
   # Debugging counter, count 0-9 on position 0
   if DEBUG:
     while True:
-      for i in range(10):
-        displayDigit(i, 0, servos)
+      for j in range(10):
+        for i in range(4):
+          displayDigit(j, i, servos)
         time.sleep(2)
 
   # Sync time via wifi and record the sync time
