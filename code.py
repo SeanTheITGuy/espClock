@@ -116,7 +116,7 @@ def displayDigit(digit, position, servos):
   segments = SEGMENT_MAP[digit]
 
   # Logic for single digit hours to not display the leading zero
-  if position == 3 and digit == 0:
+  if position == 0 and digit == 0:
     print("Leading zero. Setting all segments off")
     segments = 0b0000000
 
@@ -186,4 +186,7 @@ if __name__ == "__main__":
       last_time = new_time
 
     # Sleep 
-    time.sleep(0.25)
+    time.sleep(2)
+
+    for s in servos:
+      s.angle = None
