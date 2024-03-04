@@ -53,6 +53,7 @@ def getServoList():
   # Use board defined I2C pins
   i2c = busio.I2C(SCL, SDA)
   
+
   # Servo controller devices
   print("Initializing PCA boards")
   kits = [ PCA9685(i2c, address=0x40), PCA9685(i2c, address=0x41) ]
@@ -91,7 +92,7 @@ def getDigit(number, n):
 # Set a clock digit segment on or off
 def setSegment(s, index, is_set):
   # Determine if this segment needs to have its OFF:ON mapping inverted
-  if INVERSION_MAP[index%7]:
+  if INVERSION_MAP[index%8]:
       print("Servo ", index, " needs inversion")
       is_set = not is_set
 
@@ -115,7 +116,7 @@ def displayDigit(digit, position, servos):
   segments = SEGMENT_MAP[digit]
 
   # Logic for single digit hours to not display the leading zero
-  if position == 0 and digit == 0:
+  if position == 3 and digit == 0:
     print("Leading zero. Setting all segments off")
     segments = 0b0000000
 
@@ -185,8 +186,4 @@ if __name__ == "__main__":
       last_time = new_time
 
     # Sleep 
-    time.sleep(2)
-
-    # Turn off all servos. This is done so the servos don't buzz or use power between time changes
-    for s in servos:
-      s.angle=None
+    time.sleep(0.25)
