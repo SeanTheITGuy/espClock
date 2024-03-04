@@ -105,6 +105,7 @@ def setSegment(s, index, is_set):
     print("Setting servo ", index, " to ", SERVO_OFF, " degrees")
     s.angle = SERVO_OFF
 
+  time.sleep(0.1)
   return
 
 # Take a single digit and display it on the clock at a specified position 
