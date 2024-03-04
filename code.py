@@ -79,7 +79,8 @@ def getFourDigitTime(t):
   
   # Logic for 12hr time
   if not MILITARY_TIME:
-    hour = hour%12
+    if hour > 12:
+      hour = hour%12
 
   return(hour * 100 + minute)
 
