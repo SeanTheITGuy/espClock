@@ -11,7 +11,7 @@ from adafruit_motor import servo
 from adafruit_pca9685 import PCA9685
 
 # Constants
-DEBUG = False 
+DEBUG = False
 MILITARY_TIME = False
 MIN_PWM = 1000
 MAX_PWM = 2000
@@ -20,12 +20,12 @@ INVERSION_MAP = [ True, True, False, True, False, True, True ]
 SEGMENT_MAP = [ 0b1110111, 0b0100100, 0b1011101, 0b1101101, 0b0101110, 0b1101011, 0b1111011, 0b0100101, 0b1111111, 0b1101111 ]
 TZ_OFFSET = -3
 RESYNC_HOURS = 4
-SERVO_ON = 180 
+SERVO_ON = 180
 SERVO_OFF = 0
 PCA_KIT_ADDRESSES = [ 0x40, 0x41 ]
 
 def wifiConnect():
-  try: 
+  try:
     ssid = os.getenv("WIFI_SSID")
     password = os.getenv("WIFI_PASSWORD")
     print("Connecting to", ssid)
@@ -35,7 +35,7 @@ def wifiConnect():
     print("Failed to connect to wifi.")
 
   return(socketpool.SocketPool(wifi.radio))
-  
+
 # Syncronize internal time via ntp and return current epoch seconds
 def syncTime():
   try:
@@ -44,7 +44,7 @@ def syncTime():
     ntp = adafruit_ntp.NTP(pool, tz_offset=TZ_OFFSET)
     rtc.RTC().datetime = ntp.datetime
     print("Time syncronized.")
-  except: 
+  except:
     print("Failed to sync time.")
 
   return(time.time())
@@ -52,7 +52,7 @@ def syncTime():
 # Initialize two PCA boards and return a list of all 32 available output channels
 def getServoList():
   # Use board defined I2C pins
-  i2c = busio.I2C(SCL, SDA)  
+  i2c = busio.I2C(SCL, SDA)
 
   # Servo controller devices
   print("Initializing PCA boards")
@@ -74,12 +74,12 @@ def getServoList():
   print("\nServos Collated")
 
   return(servo_list)
-  
+
 # return a 4 digit number with the current time (eg: 11:42am -> 1142)
 def getFourDigitTime(t):
   hour = t.tm_hour
   minute = t.tm_min
-  
+
   # Logic for 12hr time
   if not MILITARY_TIME:
     if hour > 12:
@@ -108,13 +108,12 @@ def setSegment(s, index, is_set):
     print("Setting servo ", index, " to ", SERVO_OFF, " degrees")
     s.angle = SERVO_OFF
 
-  
+
   time.sleep(0.10)
-  s.angle = None
-    
+
   return
 
-# Take a single digit and display it on the clock at a specified position 
+# Take a single digit and display it on the clock at a specified position
 def displayDigit(digit, position, servos):
   # Define where to start in the servo list based on which digit place we are displaying
   servo_index_offset = position * 8
@@ -183,8 +182,8 @@ if __name__ == "__main__":
 
     # Get the current time
     new_time = getFourDigitTime(time.localtime())
-    
-    # Check if the time has changed 
+
+    # Check if the time has changed
     if(last_time != new_time):
       # Time has changed, update the clock
       print("Updating time to: ", new_time)
@@ -197,5 +196,9 @@ if __name__ == "__main__":
     for s in servos:
       s.angle = None
 
-    # Sleep 
+    # Sleep
     time.sleep(1)
+    for s in servos:
+      s.angle = None
+
+
