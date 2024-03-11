@@ -18,10 +18,11 @@ MAX_PWM = 2000
 PWM_FREQ = 50
 INVERSION_MAP = [ True, True, False, True, False, True, True ]
 SEGMENT_MAP = [ 0b1110111, 0b0100100, 0b1011101, 0b1101101, 0b0101110, 0b1101011, 0b1111011, 0b0100101, 0b1111111, 0b1101111 ]
-TZ_OFFSET = -4
+TZ_OFFSET = -3
 RESYNC_HOURS = 4
 SERVO_ON = 180 
 SERVO_OFF = 0
+PCA_KIT_ADDRESSES = [ 0x40, 0x41 ]
 
 def wifiConnect():
   try: 
@@ -51,12 +52,14 @@ def syncTime():
 # Initialize two PCA boards and return a list of all 32 available output channels
 def getServoList():
   # Use board defined I2C pins
-  i2c = busio.I2C(SCL, SDA)
-  
+  i2c = busio.I2C(SCL, SDA)  
 
   # Servo controller devices
   print("Initializing PCA boards")
-  kits = [ PCA9685(i2c, address=0x40), PCA9685(i2c, address=0x41) ]
+  #kits = [ PCA9685(i2c, address=0x40), PCA9685(i2c, address=0x41) ]
+  kits = []
+  for i2c_address in PCA_KIT_ADDRESSES:
+    kits.append(PCA9685(i2c, address=i2c_address))
 
   # Set up kits and define servo array
   print("Collating Servos...")
@@ -105,7 +108,8 @@ def setSegment(s, index, is_set):
     print("Setting servo ", index, " to ", SERVO_OFF, " degrees")
     s.angle = SERVO_OFF
 
-  time.sleep(0.1)
+  time.sleep(0.10)
+
   return
 
 # Take a single digit and display it on the clock at a specified position 
@@ -188,7 +192,7 @@ if __name__ == "__main__":
       last_time = new_time
 
     # Sleep 
-    time.sleep(2)
+    time.sleep(1)
 
     for s in servos:
       s.angle = None
