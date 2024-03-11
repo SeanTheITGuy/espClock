@@ -108,8 +108,10 @@ def setSegment(s, index, is_set):
     print("Setting servo ", index, " to ", SERVO_OFF, " degrees")
     s.angle = SERVO_OFF
 
+  
   time.sleep(0.10)
-
+  s.angle = None
+    
   return
 
 # Take a single digit and display it on the clock at a specified position 
@@ -189,9 +191,11 @@ if __name__ == "__main__":
       displayTime(new_time, servos)
       # New time now becomes old time
       last_time = new_time
-
-    # Sleep 
-    time.sleep(1)
+    else:
+      print("No Update")
 
     for s in servos:
       s.angle = None
+
+    # Sleep 
+    time.sleep(1)
