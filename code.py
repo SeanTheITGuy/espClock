@@ -11,7 +11,7 @@ from adafruit_motor import servo
 from adafruit_pca9685 import PCA9685
 
 # Constants
-DEBUG = False
+DEBUG = False 
 MILITARY_TIME = False
 MIN_PWM = 1000
 MAX_PWM = 2000
@@ -83,7 +83,7 @@ def getFourDigitTime(t):
   # Logic for 12hr time
   if not MILITARY_TIME:
     if hour > 12:
-      hour = hour%12
+      hour = hour-12
 
   return(hour * 100 + minute)
 
@@ -158,10 +158,9 @@ if __name__ == "__main__":
   # Debugging counter, count 0-9 on position 0
   if DEBUG:
     while True:
-      for j in range(10):
-        for i in range(4):
-          displayDigit(j, i, servos)
-        time.sleep(2)
+      for i in range(4):
+        displayDigit(8, i, servos)
+      time.sleep(2)
 
   # Sync time via wifi and record the sync time
   sync_time = syncTime()
